@@ -1,0 +1,15 @@
+{
+  "name": "Test House",
+  "layers": [
+    {
+      "label": "Walls",
+      "points": "50,150 150,150 150,50 50,50",
+      "color": "#F44336"
+    },
+    {
+      "label": "Roof",
+      "points": "50,50 150,50 100,0",
+      "color": "#3F51B5"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# Android Studio / IntelliJ junk
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Build folders (The source of the 2,000 files!)
+build/
+app/build/
+.gradle/
+local.properties
+
+# System junk
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
