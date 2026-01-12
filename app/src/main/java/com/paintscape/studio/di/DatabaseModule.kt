@@ -4,6 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import com.paintscape.studio.data.local.AppDatabase
 import com.paintscape.studio.data.local.dao.ArtworkDao
+import com.paintscape.studio.data.local.dao.ColorPaletteDao
+import com.paintscape.studio.data.local.dao.FavoriteColorDao
+import com.paintscape.studio.data.local.dao.RecentColorDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,11 +25,28 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "paintscape-db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration() // For development: wipe DB on schema changes
+            .build()
     }
 
     @Provides
     fun provideArtworkDao(appDatabase: AppDatabase): ArtworkDao {
         return appDatabase.artworkDao()
+    }
+
+    @Provides
+    fun provideColorPaletteDao(appDatabase: AppDatabase): ColorPaletteDao {
+        return appDatabase.colorPaletteDao()
+    }
+
+    @Provides
+    fun provideFavoriteColorDao(appDatabase: AppDatabase): FavoriteColorDao {
+        return appDatabase.favoriteColorDao()
+    }
+
+    @Provides
+    fun provideRecentColorDao(appDatabase: AppDatabase): RecentColorDao {
+        return appDatabase.recentColorDao()
     }
 }

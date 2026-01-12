@@ -36,12 +36,22 @@ class GalleryViewModel @Inject constructor(
     val state: StateFlow<GalleryUiState> = combine(
         billingRepository.premiumStatus,
         billingRepository.purchasedArtPacks
-    ) { isPremiumUser, _ -> // purchasedPacks - TODO: Use for IAP art pack unlocks
+    ) { isPremiumUser, purchasedPacks ->
+
+        // Filter artworks: show all if premium user, otherwise only non-premium artworks
+        // or artworks from purchased packs
+        val filteredArtworks = if (isPremiumUser) {
+            allArtworks
+        } else {
+            allArtworks.filter { artwork ->
+                !artwork.isPremium || purchasedPacks.contains(artwork.categoryId)
+            }
+        }
 
         GalleryUiState(
             categoryId = categoryId,
             categoryTitle = category?.name ?: "Artwork Gallery",
-            artworks = allArtworks,
+            artworks = filteredArtworks,
             isPremiumUser = isPremiumUser,
             isLoading = false
         )

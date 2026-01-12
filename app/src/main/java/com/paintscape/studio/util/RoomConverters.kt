@@ -18,4 +18,16 @@ class RoomConverters {
         val setType = object : TypeToken<Set<Int>>() {}.type
         return gson.fromJson(value, setType)
     }
+
+    @TypeConverter
+    fun fromLongList(value: List<Long>?): String? {
+        return value?.let { gson.toJson(it) }
+    }
+
+    @TypeConverter
+    fun toLongList(value: String?): List<Long>? {
+        if (value == null) return null
+        val listType = object : TypeToken<List<Long>>() {}.type
+        return gson.fromJson(value, listType)
+    }
 }

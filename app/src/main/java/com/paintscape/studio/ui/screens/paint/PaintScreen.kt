@@ -10,9 +10,14 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,11 +57,13 @@ fun PaintScreen(
     val layers by viewModel.layers.collectAsState()
     val artworkWidth by viewModel.artworkWidth.collectAsState()
     val artworkHeight by viewModel.artworkHeight.collectAsState()
+    val currentPalette by viewModel.currentPalette.collectAsState()
+    val allPalettes by viewModel.allPalettes.collectAsState()
+    val favoriteColors by viewModel.favoriteColors.collectAsState()
+    val recentColors by viewModel.recentColors.collectAsState()
 
-    val paletteColors = listOf(
-        Color.Red, Color.Blue, Color.Green, Color.Yellow,
-        Color(0xFFFFA500), Color.Magenta, Color.Black
-    )
+    // Dialog state for palette selector
+    var showPaletteSelector by remember { mutableStateOf(false) }
 
     // Zoom and Pan state
     var zoomScale by remember { mutableFloatStateOf(1f) }
@@ -229,33 +236,236 @@ fun PaintScreen(
                 }
             }
 
-            // Color Palette
-            Text(text = "Pick a Color", modifier = Modifier.padding(top = 8.dp))
+            // Color Palette Section
+            ColorPaletteSection(
+                viewModel = viewModel,
+                currentPalette = currentPalette,
+                favoriteColors = favoriteColors,
+                recentColors = recentColors,
+                onShowPaletteSelector = { showPaletteSelector = true }
+            )
+        }
+    }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+    // Palette Selector Dialog
+    if (showPaletteSelector) {
+        PaletteSelectorDialog(
+            palettes = allPalettes,
+            currentPalette = currentPalette,
+            onSelectPalette = { palette ->
+                viewModel.selectPalette(palette)
+                showPaletteSelector = false
+            },
+            onDismiss = { showPaletteSelector = false }
+        )
+    }
+}
+
+@Composable
+private fun ColorPaletteSection(
+    viewModel: PaintViewModel,
+    currentPalette: com.paintscape.studio.data.local.entity.ColorPaletteEntity?,
+    favoriteColors: List<Color>,
+    recentColors: List<Color>,
+    onShowPaletteSelector: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        // Palette selector header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = currentPalette?.name ?: "Select Palette",
+                style = MaterialTheme.typography.titleSmall
+            )
+            IconButton(onClick = onShowPaletteSelector) {
+                Icon(Icons.Default.Palette, contentDescription = "Change Palette")
+            }
+        }
+
+        // Current palette colors
+        if (currentPalette != null) {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                paletteColors.forEach { color ->
-                    Box(
-                        modifier = Modifier
-                            .size(45.dp)
-                            .clip(CircleShape)
-                            .background(color)
-                            .clickable { viewModel.onColorSelected(color) }
-                            .border(
-                                width = if (viewModel.selectedColor == color) 4.dp else 1.dp,
-                                color = if (viewModel.selectedColor == color) Color.Gray else Color.LightGray,
-                                shape = CircleShape
-                            )
+                items(currentPalette.colors) { colorLong ->
+                    val color = Color(colorLong.toInt())
+                    ColorCircle(
+                        color = color,
+                        isSelected = viewModel.selectedColor == color,
+                        isFavorite = favoriteColors.contains(color),
+                        onColorSelected = { viewModel.onColorSelected(color) },
+                        onToggleFavorite = { viewModel.toggleFavoriteColor(color) }
+                    )
+                }
+            }
+        }
+
+        // Recent colors section
+        if (recentColors.isNotEmpty()) {
+            Text(
+                text = "Recent",
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(recentColors.take(8)) { color ->
+                    ColorCircle(
+                        color = color,
+                        isSelected = viewModel.selectedColor == color,
+                        isFavorite = favoriteColors.contains(color),
+                        onColorSelected = { viewModel.onColorSelected(color) },
+                        onToggleFavorite = { viewModel.toggleFavoriteColor(color) },
+                        size = 36.dp
+                    )
+                }
+            }
+        }
+
+        // Favorites section
+        if (favoriteColors.isNotEmpty()) {
+            Text(
+                text = "Favorites",
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(favoriteColors) { color ->
+                    ColorCircle(
+                        color = color,
+                        isSelected = viewModel.selectedColor == color,
+                        isFavorite = true,
+                        onColorSelected = { viewModel.onColorSelected(color) },
+                        onToggleFavorite = { viewModel.toggleFavoriteColor(color) },
+                        size = 36.dp
                     )
                 }
             }
         }
     }
 }
+
+@Composable
+private fun ColorCircle(
+    color: Color,
+    isSelected: Boolean,
+    isFavorite: Boolean,
+    onColorSelected: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    size: androidx.compose.ui.unit.Dp = 45.dp
+) {
+    Box(
+        modifier = Modifier.size(size),
+        contentAlignment = Alignment.Center
+    ) {
+        // Color circle
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(CircleShape)
+                .background(color)
+                .clickable { onColorSelected() }
+                .border(
+                    width = if (isSelected) 3.dp else 1.dp,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray,
+                    shape = CircleShape
+                )
+        )
+
+        // Favorite icon in top-right corner
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(16.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface)
+                .clickable { onToggleFavorite() }
+                .padding(2.dp)
+        ) {
+            Icon(
+                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                tint = if (isFavorite) Color.Red else Color.Gray,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+@Composable
+private fun PaletteSelectorDialog(
+    palettes: List<com.paintscape.studio.data.local.entity.ColorPaletteEntity>,
+    currentPalette: com.paintscape.studio.data.local.entity.ColorPaletteEntity?,
+    onSelectPalette: (com.paintscape.studio.data.local.entity.ColorPaletteEntity) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Color Palette") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                palettes.forEach { palette ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelectPalette(palette) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (palette.id == currentPalette?.id)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp)
+                        ) {
+                            Text(
+                                text = palette.name,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                palette.colors.forEach { colorLong ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(colorLong.toInt()))
+                                            .border(0.5.dp, Color.Gray, CircleShape)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
 
 // Helper function to check if a point is inside a layer's path
 private fun isPointInLayer(layer: Layer, x: Float, y: Float): Boolean {
