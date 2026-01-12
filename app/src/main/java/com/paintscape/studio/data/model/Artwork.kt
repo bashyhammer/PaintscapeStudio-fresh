@@ -20,13 +20,6 @@ enum class Difficulty(val rating: Int) {
     HARD(3)
 }
 
-data class Category(
-    val id: String,
-    val name: String,
-    val iconRes: Int // Placeholder for local icon resource ID
-)
-
-
 
 @kotlinx.serialization.Serializable
 data class RegionJson(

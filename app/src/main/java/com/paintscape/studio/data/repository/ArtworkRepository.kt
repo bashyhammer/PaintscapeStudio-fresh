@@ -36,14 +36,24 @@ class ArtworkRepository @Inject constructor(
     // --- End Mock Data ---
 
     fun getCategories(): List<Category> = mockCategories
+
     fun getArtworkByCategory(categoryId: String): List<Artwork> {
         return if (categoryId == "user_photos") emptyList() // User photo logic separate
         else mockArtwork.filter { it.categoryId == categoryId }
     }
 
-    fun getAnimalData(animalName: String): SegmentationData? {
-        // 2. Point it to the new loadAnimalData function we wrote
+    fun getArtworkById(artworkId: String): Artwork? {
+        return mockArtwork.find { it.id == artworkId }
+    }
+
+    suspend fun getAnimalData(animalName: String): SegmentationData? {
         return segmentationEngine.loadAnimalData(animalName)
+    }
+
+    suspend fun getSegmentationDataForArtwork(artwork: Artwork): SegmentationData? {
+        // Extract filename without extension from the path (e.g., "fox.json" -> "fox")
+        val filename = artwork.segmentationJsonAssetPath.removeSuffix(".json")
+        return segmentationEngine.loadAnimalData(filename)
     }
 
     fun getArtworkProgress(artworkId: String): Flow<ArtworkProgressEntity?> {

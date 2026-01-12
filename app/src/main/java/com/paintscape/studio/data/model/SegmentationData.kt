@@ -4,16 +4,24 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SegmentationData(
-    val name: String,
-    val layers: List<Layer>
+    val layers: List<Layer>,                      // Required - the actual artwork data
+    val width: Int = 1000,                        // Required with default - artwork width in pixels
+    val height: Int = 1000,                       // Required with default - artwork height in pixels
+    val artworkId: String? = null,                // Optional - identifier for the artwork
+    val name: String? = null,                     // Optional - display name
+    val palette: Map<String, String>? = null      // Optional - color palette mapping
 )
 
+@Serializable
 data class Layer(
-    val label: String? = null,
-    val number: Int? = null, // The Fox uses numbers instead of labels
-    val points: String? = null, // For the House
-    val paths: List<List<List<Float>>>? = null, // For the Fox (The triple brackets!)
-    val color: String? = null,
-    val colorHex: String? = null // The Fox uses colorHex
-)
+    val number: Int? = null,                      // Layer identifier (Fox style)
+    val label: String? = null,                    // Layer identifier (House style)
+    val paths: List<List<List<Float>>>? = null,   // Nested coordinates (Fox style)
+    val points: String? = null,                   // String coordinates (House style)
+    val color: String? = null,                    // Fill color
+    val colorHex: String? = null                  // Alternate color format
+) {
+    // Helper to get a consistent layer ID regardless of format
+    val id: String get() = number?.toString() ?: label ?: ""
+}
 
