@@ -31,7 +31,7 @@ import androidx.compose.foundation.background
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GalleryScreen(
-    categoryId: String,
+    @Suppress("UNUSED_PARAMETER") categoryId: String, // Will be used for category-specific features
     viewModel: GalleryViewModel = hiltViewModel(),
     onArtworkSelected: (String) -> Unit,
     onBack: () -> Unit

@@ -65,6 +65,7 @@ class BillingClientWrapper @Inject constructor(
     }
 
     // This function will be called when the user clicks a "Buy" button
+    @Suppress("UNUSED_PARAMETER") // Activity will be needed for real billing flow
     fun launchPurchaseFlow(activity: Activity, productId: String) {
         // This is a simplified version; in a real app, you'd fetch ProductDetails first.
         println("Logic for launching Google Play Store for $productId")

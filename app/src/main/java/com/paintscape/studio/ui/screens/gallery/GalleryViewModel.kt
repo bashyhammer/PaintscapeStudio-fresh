@@ -36,8 +36,7 @@ class GalleryViewModel @Inject constructor(
     val state: StateFlow<GalleryUiState> = combine(
         billingRepository.premiumStatus,
         billingRepository.purchasedArtPacks
-    ) { isPremiumUser, purchasedPacks ->
-        // In a real app, purchasedPacks would be used to unlock IAP packs
+    ) { isPremiumUser, _ -> // purchasedPacks - TODO: Use for IAP art pack unlocks
 
         GalleryUiState(
             categoryId = categoryId,
